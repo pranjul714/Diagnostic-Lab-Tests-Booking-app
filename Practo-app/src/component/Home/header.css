@@ -1,0 +1,57 @@
+.nav-link {
+  position: relative;
+  text-decoration: none;
+  color: inherit;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background-color: #0d6efd; /* Bootstrap primary color */
+  transition: width 0.4s ease-in-out;
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
+.Login-btn
+{
+    height:30px;
+    width:100px;
+    border : 1px solid #eae9e9;
+    background-color:white;
+    font-size:13px;
+    border-radius:5px;
+}
+
+.Login:hover {
+ 
+    border : 1px solid #0D6EFD;
+    background-color:white;
+    font-size:13px;
+    border-radius:5px;
+}
+
+
+.Login-btn {
+    height:30px;
+    width:100px;
+    border : 1px solid #eae9e9;
+    color:#8b8b8b;
+    background-color: transparent;
+    border-radius: 0.25rem;
+    transition: all 0.1s ease; /* 👈 Smooth transition */
+    text-decoration: none;
+    display: inline-block;
+}
+
+.Login-btn:hover {
+  border: 1px solid #0D6EFD;
+  
+  color:#0D6EFD;
+}
