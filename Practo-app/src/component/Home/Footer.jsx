@@ -41,7 +41,7 @@ const Footer = () => {
 
         <hr className="border-light" />
         <div className="text-center mt-3">
-          <p className="text-white">© 2023 MediLab. All rights reserved.</p>
+          <p className="text-white"> All rights reserved.</p>
         </div>
       </div>
     </footer>

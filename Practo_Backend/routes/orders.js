@@ -2,6 +2,9 @@ const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const Tesseract = require("tesseract.js");
+const axios = require("axios");
+const SendMail = require("../utils/mailer");
 
 const router = express.Router();
 let db;
@@ -10,37 +13,90 @@ function setDatabase(database) {
   db = database;
 }
 
-// Ensure uploads folder exists
 const uploadDir = path.join(__dirname, "../uploads");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
-// Multer config for disk storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) =>
     cb(null, `${Date.now()}-${file.originalname.replace(/\s+/g, "_")}`),
 });
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
+
+const keywordTestMap = {
+  metformin: ["HbA1c", "Fasting Glucose", "PPBS"],
+  fatigue: ["CBC", "Thyroid Profile"],
+  thirst: ["Fasting Glucose", "HbA1c"],
+  diabetes: ["HbA1c", "FBS", "PPBS"],
+  thyroid: ["TSH", "T3", "T4"],
+  anemia: ["Hemoglobin", "Iron Studies"],
+  fever: ["CBC", "Malaria", "Dengue"],
+  hypertension: ["Lipid Profile", "KFT"],
+  cough: ["Chest X-Ray", "CBC"],
+  jaundice: ["LFT", "Bilirubin"],
+};
+
+async function runOCR(filePath) {
+  try {
+    const result = await Tesseract.recognize(filePath, "eng", {
+      logger: (m) => console.log(m),
+    });
+    return result.data.text;
+  } catch (err) {
+    console.error("OCR error:", err.message);
+    return "";
+  }
+}
+
+async function extractMedicalEntities(text) {
+  try {
+    const response = await axios.post("http://localhost:7000/extract", { text });
+    return response.data;
+  } catch (err) {
+    console.error("NLP extraction error:", err.message);
+    return { diagnoses: [], medications: [], symptoms: [] };
+  }
+}
+
+function fallbackTestMatcher(text) {
+  const lowerText = text.toLowerCase();
+  const matchedTests = new Set();
+
+  Object.entries(keywordTestMap).forEach(([keyword, tests]) => {
+    if (lowerText.includes(keyword)) {
+      tests.forEach((test) => matchedTests.add(test));
+    }
+  });
+
+  return Array.from(matchedTests);
+}
+
+router.post("/upload-prescription", upload.single("file"), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "Prescription file is required" });
+
+    const filePath = req.file.path;
+    const extractedText = await runOCR(filePath);
+    const entities = await extractMedicalEntities(extractedText);
+
+    const autoTests = [
+      ...(entities?.diagnoses || []),
+      ...(entities?.symptoms || []),
+      ...(entities?.medications || []),
+    ];
+
+    let suggestedTests = autoTests.length ? autoTests : fallbackTestMatcher(extractedText);
+
+    res.status(200).json({ extractedText, entities, suggestedTests });
+  } catch (err) {
+    console.error("❌ Extraction error:", err.message);
+    res.status(500).json({ error: "Failed to extract entities from prescription" });
+  }
 });
 
-// 📝 Place a new diagnostic order
 router.post("/", upload.single("prescription"), async (req, res) => {
   try {
     const { name, phone, tests, email, doctorName, prescriptionDate } = req.body;
-
-    console.log("Incoming order:", {
-      name,
-      phone,
-      tests,
-      email,
-      doctorName,
-      prescriptionDate,
-    });
-    console.log("Uploaded file:", req.file?.path);
 
     if (!name || !phone || !email || !req.file) {
       return res.status(400).json({ error: "Missing required fields or file" });
@@ -50,7 +106,7 @@ router.post("/", upload.single("prescription"), async (req, res) => {
       ? tests
       : tests?.split(",").map((t) => t.trim()).filter(Boolean);
 
-    if (!parsedTests || parsedTests.length === 0) {
+    if (!parsedTests.length) {
       return res.status(400).json({ error: "No valid tests found in input" });
     }
 
@@ -68,30 +124,62 @@ router.post("/", upload.single("prescription"), async (req, res) => {
     };
 
     await db.collection("orders").insertOne(order);
-    console.log("✅ Order inserted:", order);
 
-    res.status(201).json({
-      message: "Order placed successfully",
-      extractedTests: parsedTests,
-    });
+  const mailText = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🩺  Diagnostic Test Confirmation
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Hello ${name.trim().toUpperCase()},
+
+We’re pleased to inform you that your diagnostic test booking has been **successfully confirmed**.  
+Thank you for trusting us with your healthcare needs.
+
+📋 **Booking Details**
+──────────────────────
+• **Tests**: ${parsedTests.join(", ")}
+• **Booking ID**: ${order._id}
+• **Date**: ${prescriptionDate || "Not specified"}
+• **Doctor**: ${doctorName || "Not specified"}
+
+📌 **Important Information**
+────────────────────────────
+Please bring:
+- A valid government-issued ID
+- Your prescription (if applicable)
+
+If you have any questions or need to reschedule, our support team is here to help.  
+📞 Contact: +91-XXXXXXXXXX
+
+We look forward to serving you and ensuring a smooth testing experience.
+
+Warm regards,  
+**Diagnostic Booking Team**  
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+`;
+
+    SendMail(email, "Diagnostic Test Booking Confirmation", mailText);
+
+
+
+
+    res.status(201).json({ message: "Order placed successfully", extractedTests: parsedTests });
   } catch (err) {
-    console.error("❌ Order placement error:", err.message, err.stack);
-    res.status(500).json({ error: err.message || "Failed to place order" });
+    console.error("❌ Order placement error:", err.message);
+    res.status(500).json({ error: "Failed to place order" });
   }
 });
 
-// 📥 Fetch orders by email
 router.get("/by-email/:email", async (req, res) => {
   try {
     const email = req.params.email?.trim().toLowerCase();
-    if (!email) {
-      return res.status(400).json({ success: false, message: "Email is required" });
-    }
+    if (!email) return res.status(400).json({ success: false, message: "Email is required" });
 
     const orders = await db.collection("orders").find({ email }).toArray();
     res.status(200).json({ success: true, orders });
   } catch (err) {
-    console.error("❌ Error fetching orders:", err.message, err.stack);
+    console.error("❌ Error fetching orders:", err.message);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
