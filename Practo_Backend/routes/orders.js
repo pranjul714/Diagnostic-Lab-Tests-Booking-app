@@ -50,7 +50,7 @@ async function runOCR(filePath) {
 
 async function extractMedicalEntities(text) {
   try {
-    const response = await axios.post("http://localhost:7000/extract", { text });
+    const response = await axios.post("https://diagnostic-lab-tests-booking-app-1.onrender.com/extract", { text });
     return response.data;
   } catch (err) {
     console.error("NLP extraction error:", err.message);

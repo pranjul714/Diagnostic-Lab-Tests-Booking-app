@@ -28,7 +28,7 @@ const LoginForm = () => {
             initialValues={{ email: '', password: '', rememberMe: false }}
             validationSchema={validationSchema}
            onSubmit={(values, { setSubmitting }) => {
-             axios.post("http://localhost:8080/login", {
+             axios.post("https://diagnostic-lab-tests-booking-app-1.onrender.com/login", {
                     email: values.email,
                     password: values.password
                        })

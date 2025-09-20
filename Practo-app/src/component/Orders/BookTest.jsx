@@ -32,7 +32,7 @@ const BookTest = () => {
     }
 
     axios
-      .post("http://localhost:8080/account", { email })
+      .post("https://diagnostic-lab-tests-booking-app-1.onrender.com/account", { email })
       .then((res) => {
         if (res.data.success) {
           const user = res.data.user;
@@ -61,7 +61,7 @@ const BookTest = () => {
       try {
         setLoading(true);
         const res = await axios.post(
-          "http://localhost:8080/api/orders/upload-prescription",
+          "https://diagnostic-lab-tests-booking-app-1.onrender.com/api/orders/upload-prescription",
           tempPayload,
           { headers: { "Content-Type": "multipart/form-data" } }
         );
@@ -136,7 +136,7 @@ const BookTest = () => {
     try {
       setLoading(true);
       const res = await axios.post(
-        "http://localhost:8080/api/orders",
+        "https://diagnostic-lab-tests-booking-app-1.onrender.com/api/orders",
         payload,
         { headers: { "Content-Type": "multipart/form-data" } }
       );

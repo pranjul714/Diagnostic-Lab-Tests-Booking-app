@@ -56,7 +56,7 @@ const Register = () => {
                 age: values.age,
               };
 
-              axios.post("http://localhost:8080/register", payload)
+              axios.post("https://diagnostic-lab-tests-booking-app-1.onrender.com/register", payload)
                 .then(() => {
                   navigate("/login");
                 })

@@ -16,7 +16,7 @@ const Account = () => {
       return;
     }
 
-    axios.post("http://localhost:8080/account", { email })
+    axios.post("https://diagnostic-lab-tests-booking-app-1.onrender.com/account", { email })
       .then(res => {
         if (res.data.success) {
           setFormData(res.data.user);
@@ -37,7 +37,7 @@ const Account = () => {
       extraPhones: formData.extraPhones?.split(',').map(p => p.trim()) || []
     };
 
-    axios.post("http://localhost:8080/update-profile", {
+    axios.post("https://diagnostic-lab-tests-booking-app-1.onrender.com/update-profile", {
       email,
       profile: updatedProfile
     })
