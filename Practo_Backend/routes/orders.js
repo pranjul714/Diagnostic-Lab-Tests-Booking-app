@@ -13,16 +13,29 @@ function setDatabase(database) {
   db = database;
 }
 
+// 📁 Ensure uploads directory exists
 const uploadDir = path.join(__dirname, "../uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
+// 📦 Multer config
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) =>
     cb(null, `${Date.now()}-${file.originalname.replace(/\s+/g, "_")}`),
 });
-const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith("image/")) cb(null, true);
+  else cb(new Error("Only image files are allowed"), false);
+};
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter,
+});
+
+// 🧠 Fallback keyword-to-test mapping
 const keywordTestMap = {
   metformin: ["HbA1c", "Fasting Glucose", "PPBS"],
   fatigue: ["CBC", "Thyroid Profile"],
@@ -36,6 +49,7 @@ const keywordTestMap = {
   jaundice: ["LFT", "Bilirubin"],
 };
 
+// 🔍 OCR logic
 async function runOCR(filePath) {
   try {
     const result = await Tesseract.recognize(filePath, "eng", {
@@ -48,6 +62,7 @@ async function runOCR(filePath) {
   }
 }
 
+// 🧬 NLP extraction
 async function extractMedicalEntities(text) {
   try {
     const response = await axios.post("https://diagnostic-lab-tests-booking-app-1.onrender.com/extract", { text });
@@ -58,6 +73,7 @@ async function extractMedicalEntities(text) {
   }
 }
 
+// 🛡 Fallback matcher
 function fallbackTestMatcher(text) {
   const lowerText = text.toLowerCase();
   const matchedTests = new Set();
@@ -71,6 +87,7 @@ function fallbackTestMatcher(text) {
   return Array.from(matchedTests);
 }
 
+// 📤 Upload + extract route
 router.post("/upload-prescription", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "Prescription file is required" });
@@ -85,7 +102,7 @@ router.post("/upload-prescription", upload.single("file"), async (req, res) => {
       ...(entities?.medications || []),
     ];
 
-    let suggestedTests = autoTests.length ? autoTests : fallbackTestMatcher(extractedText);
+    const suggestedTests = autoTests.length ? autoTests : fallbackTestMatcher(extractedText);
 
     res.status(200).json({ extractedText, entities, suggestedTests });
   } catch (err) {
@@ -94,6 +111,7 @@ router.post("/upload-prescription", upload.single("file"), async (req, res) => {
   }
 });
 
+// 📝 Place order route
 router.post("/", upload.single("prescription"), async (req, res) => {
   try {
     const { name, phone, tests, email, doctorName, prescriptionDate } = req.body;
@@ -125,7 +143,7 @@ router.post("/", upload.single("prescription"), async (req, res) => {
 
     await db.collection("orders").insertOne(order);
 
-  const mailText = `
+    const mailText = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🩺  Diagnostic Test Confirmation
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -161,9 +179,6 @@ Warm regards,
 
     SendMail(email, "Diagnostic Test Booking Confirmation", mailText);
 
-
-
-
     res.status(201).json({ message: "Order placed successfully", extractedTests: parsedTests });
   } catch (err) {
     console.error("❌ Order placement error:", err.message);
@@ -171,6 +186,7 @@ Warm regards,
   }
 });
 
+// 📥 Fetch orders by email
 router.get("/by-email/:email", async (req, res) => {
   try {
     const email = req.params.email?.trim().toLowerCase();

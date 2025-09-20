@@ -23,7 +23,6 @@ const BookTest = () => {
   const [dragActive, setDragActive] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
 
-  // Fetch user info on mount
   useEffect(() => {
     const email = JSON.parse(localStorage.getItem("user"))?.email;
     if (!email) {
@@ -50,44 +49,47 @@ const BookTest = () => {
 
   const handleFileChange = async (e) => {
     const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      setFormData((prev) => ({ ...prev, prescription: selectedFile }));
-      setPreviewUrl(URL.createObjectURL(selectedFile));
-      setMessage(`✅ Prescription selected: ${selectedFile.name}`);
+    const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
+    if (!selectedFile || !allowedTypes.includes(selectedFile.type)) {
+      setMessage("❌ Invalid file type. Please upload JPG, PNG, or PDF.");
+      return;
+    }
 
-      const tempPayload = new FormData();
-      tempPayload.append("file", selectedFile);
+    setFormData((prev) => ({ ...prev, prescription: selectedFile }));
+    setPreviewUrl(URL.createObjectURL(selectedFile));
+    setMessage(`✅ Prescription selected: ${selectedFile.name}`);
 
-      try {
-        setLoading(true);
-        const res = await axios.post(
-          "https://diagnostic-lab-tests-booking-app-1.onrender.com/api/orders/upload-prescription",
-          tempPayload,
-          { headers: { "Content-Type": "multipart/form-data" } }
-        );
+    const tempPayload = new FormData();
+    tempPayload.append("file", selectedFile);
 
-        const { entities } = res.data;
-        const autoTests = [
-          ...(entities?.diagnoses || []),
-          ...(entities?.symptoms || []),
-        ];
+    try {
+      setLoading(true);
+      const res = await axios.post(
+        "https://diagnostic-lab-tests-booking-app-1.onrender.com/api/orders/upload-prescription",
+        tempPayload,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
 
-        if (autoTests.length) {
-          setFormData((prev) => ({ ...prev, tests: autoTests }));
-          setMessage(`📄 Auto-suggested tests: ${autoTests.join(", ")}`);
-        } else {
-          setMessage("📥 Prescription uploaded. No tests auto-suggested.");
-        }
-      } catch (err) {
-        console.error("OCR extraction error:", err);
-        setMessage("Error analyzing prescription. You can still enter tests manually.");
-      } finally {
-        setLoading(false);
+      const { entities } = res.data;
+      const autoTests = [
+        ...(entities?.diagnoses || []),
+        ...(entities?.symptoms || []),
+      ];
+
+      if (autoTests.length) {
+        setFormData((prev) => ({ ...prev, tests: autoTests }));
+        setMessage(`📄 Auto-suggested tests: ${autoTests.join(", ")}`);
+      } else {
+        setMessage("📥 Prescription uploaded. No tests auto-suggested.");
       }
+    } catch (err) {
+      console.error("OCR extraction error:", err);
+      setMessage("Error analyzing prescription. You can still enter tests manually.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Drag events
   const handleDragOver = (e) => {
     e.preventDefault();
     setDragActive(true);
@@ -121,6 +123,11 @@ const BookTest = () => {
 
     if (!formData.prescription || formData.tests.length === 0) {
       setMessage("Please upload a prescription or ensure at least one test is listed.");
+      return;
+    }
+
+    if (!/^\+91\d{10}$/.test(formData.phone)) {
+      setMessage("❌ Invalid phone number. Must start with +91 followed by 10 digits.");
       return;
     }
 
@@ -200,7 +207,6 @@ const BookTest = () => {
                 )}
               </div>
 
-              {/* Drag & Drop Upload Section */}
               <div className="col-md-12">
                 <div
                   className={`bg-light rounded-4 p-4 text-center border border-2 ${dragActive ? "border-primary" : "border-dashed"}`}
@@ -221,10 +227,10 @@ const BookTest = () => {
                     className="d-none"
                     accept=".jpg,.jpeg,.png,.pdf"
                     onChange={handleFileChange}
-                  />
+                                      />
                 </div>
 
-                {/* Preview */}
+                {/* Preview Section */}
                 {previewUrl && (
                   <div className="mt-3 text-center">
                     {formData.prescription?.type === "application/pdf" ? (
@@ -237,7 +243,7 @@ const BookTest = () => {
                         src={previewUrl}
                         alt="Prescription Preview"
                         className="img-fluid rounded shadow-sm"
-                                               style={{ maxWidth: "400px" }}
+                        style={{ maxWidth: "400px" }}
                       />
                     )}
                   </div>

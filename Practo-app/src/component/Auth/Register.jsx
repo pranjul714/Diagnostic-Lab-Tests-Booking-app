@@ -8,17 +8,17 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 const validationSchema = Yup.object({
   email: Yup.string().email('Invalid email').required('Required'),
   phone: Yup.string()
-    .matches(/^\+91\d{10}$/, 'Invalid Mobile. Must start with +91 followed by 10 digits')
+    .matches(/^\+91\d{10}$/, 'Must start with +91 followed by 10 digits')
     .required('Required'),
   password: Yup.string()
     .required('Required')
-    .matches(/^(?=.*[A-Z]).{4,15}$/, 'Must be 4–15 chars & include one uppercase letter'),
+    .matches(/^(?=.*[A-Z]).{4,15}$/, '4–15 chars & include one uppercase letter'),
   confirmPassword: Yup.string()
     .oneOf([Yup.ref('password'), null], 'Passwords must match')
     .required('Required'),
   userId: Yup.string().required('User ID is required'),
   userName: Yup.string().required('User Name is required'),
-  age: Yup.number().required('Age is required').positive().integer(),
+  age: Yup.number().required('Age is required').min(1, 'Age must be at least 1').integer(),
 });
 
 const Register = () => {
@@ -27,7 +27,7 @@ const Register = () => {
   return (
     <div className='container mt-5 d-flex flex-wrap justify-content-center'>
       <div>
-        <img src="/illustration.png" alt="Doctor" style={{ maxWidth: '300px' }} />
+        <img src="/illustration.png" alt="Doctor illustration" style={{ maxWidth: '300px' }} />
       </div>
 
       <div style={{ width: '500px' }}>
@@ -46,7 +46,7 @@ const Register = () => {
               rememberMe: false,
             }}
             validationSchema={validationSchema}
-            onSubmit={(values) => {
+            onSubmit={(values, { setSubmitting }) => {
               const payload = {
                 userId: values.userId,
                 userName: values.userName,
@@ -56,66 +56,47 @@ const Register = () => {
                 age: values.age,
               };
 
-              axios.post("https://diagnostic-lab-tests-booking-app-1.onrender.com/register", payload)
+              axios.post("https://diagnostic-lab-tests-booking-app-1.onrender.com/register", payload, {
+                withCredentials: true
+              })
                 .then(() => {
+                  alert("✅ Registration successful!");
                   navigate("/login");
                 })
                 .catch((error) => {
+                  const message = error.response?.data?.message || "Registration failed. Please try again.";
                   console.error("Registration error:", error);
-                  alert("Registration failed. Please try again.");
-                });
+                  alert(`❌ ${message}`);
+                })
+                .finally(() => setSubmitting(false));
             }}
           >
-            {() => (
+            {({ isSubmitting }) => (
               <Form>
-                <div className="mb-3">
-                  <label htmlFor="userId" className="form-label">User ID</label>
-                  <Field type="text" name="userId" className="form-control" />
-                  <ErrorMessage name="userId" component="div" className="text-danger" />
-                </div>
-
-                <div className="mb-3">
-                  <label htmlFor="userName" className="form-label">User Name</label>
-                  <Field type="text" name="userName" className="form-control" />
-                  <ErrorMessage name="userName" component="div" className="text-danger" />
-                </div>
-
-                <div className="mb-3">
-                  <label htmlFor="email" className="form-label">Email address</label>
-                  <Field type="email" name="email" className="form-control" />
-                  <ErrorMessage name="email" component="div" className="text-danger" />
-                </div>
-
-                <div className="mb-3">
-                  <label htmlFor="phone" className="form-label">Mobile Number</label>
-                  <Field type="text" name="phone" className="form-control" />
-                  <ErrorMessage name="phone" component="div" className="text-danger" />
-                </div>
-
-                <div className="mb-3">
-                  <label htmlFor="age" className="form-label">Age</label>
-                  <Field type="number" name="age" className="form-control" />
-                  <ErrorMessage name="age" component="div" className="text-danger" />
-                </div>
-
-                <div className="mb-3">
-                  <label htmlFor="password" className="form-label">Password</label>
-                  <Field type="password" name="password" className="form-control" />
-                  <ErrorMessage name="password" component="div" className="text-danger" />
-                </div>
-
-                <div className="mb-3">
-                  <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
-                  <Field type="password" name="confirmPassword" className="form-control" />
-                  <ErrorMessage name="confirmPassword" component="div" className="text-danger" />
-                </div>
+                {[
+                  { label: "User ID", name: "userId", type: "text" },
+                  { label: "User Name", name: "userName", type: "text" },
+                  { label: "Email address", name: "email", type: "email" },
+                  { label: "Mobile Number", name: "phone", type: "text" },
+                  { label: "Age", name: "age", type: "number" },
+                  { label: "Password", name: "password", type: "password" },
+                  { label: "Confirm Password", name: "confirmPassword", type: "password" },
+                ].map(({ label, name, type }) => (
+                  <div className="mb-3" key={name}>
+                    <label htmlFor={name} className="form-label">{label}</label>
+                    <Field type={type} name={name} className="form-control" autoComplete="off" />
+                    <ErrorMessage name={name} component="div" className="text-danger" />
+                  </div>
+                ))}
 
                 <div className="form-check mb-3">
                   <Field type="checkbox" name="rememberMe" className="form-check-input" id="rememberMe" />
                   <label className="form-check-label" htmlFor="rememberMe">Remember me</label>
                 </div>
 
-                <button type="submit" className="btn btn-primary w-100">Register</button>
+                <button type="submit" className="btn btn-primary w-100" disabled={isSubmitting}>
+                  {isSubmitting ? "Registering..." : "Register"}
+                </button>
               </Form>
             )}
           </Formik>

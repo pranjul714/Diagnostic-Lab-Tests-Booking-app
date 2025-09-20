@@ -8,9 +8,16 @@ const MyOrder = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const user = JSON.parse(localStorage.getItem("user"));
+  const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) {
+      navigate("/login");
+      return;
+    }
+
+    const user = JSON.parse(storedUser);
     if (!user?.email) {
       navigate("/login");
       return;
@@ -20,13 +27,16 @@ const MyOrder = () => {
       .then(res => {
         if (res.data.success) {
           setOrders(res.data.orders);
+        } else {
+          setErrorMsg("Failed to load orders.");
         }
       })
       .catch(err => {
         console.error("Error fetching orders:", err);
+        setErrorMsg("Unable to fetch orders. Please try again later.");
       })
       .finally(() => setLoading(false));
-  }, [navigate, user]);
+  }, [navigate]);
 
   return (
     <div>
@@ -36,13 +46,15 @@ const MyOrder = () => {
 
         {loading ? (
           <div className="text-muted">Loading orders...</div>
+        ) : errorMsg ? (
+          <div className="alert alert-danger">{errorMsg}</div>
         ) : orders.length === 0 ? (
           <div className="alert alert-warning">No orders found.</div>
         ) : (
           <div className="row g-4">
             {orders.map((order, index) => (
-              <div key={index} className="col-md-6">
-                <div className="card shadow-sm">
+              <div key={order._id || index} className="col-md-6">
+                <div className="card shadow-sm h-100">
                   <div className="card-body">
                     <h5 className="card-title">Order #{index + 1}</h5>
                     <p><strong>Name:</strong> {order.name}</p>
@@ -51,15 +63,17 @@ const MyOrder = () => {
                     <p><strong>Status:</strong> <span className="badge bg-info">{order.status}</span></p>
                     <p><strong>Doctor:</strong> {order.doctorName || "N/A"}</p>
                     <p><strong>Date:</strong> {order.prescriptionDate || "N/A"}</p>
-                    <p><strong>Tests:</strong> {order.tests.join(", ")}</p>
+                    <p><strong>Tests:</strong> {Array.isArray(order.tests) ? order.tests.join(", ") : "N/A"}</p>
                     <p>
                       <strong>Prescription:</strong>{" "}
-                     <a href={order.prescriptionUrl} target="_blank" rel="noopener noreferrer">
-  View
-</a>
-
+                      {order.prescriptionUrl ? (
+                        <a href={order.prescriptionUrl} target="_blank" rel="noopener noreferrer">
+                          View
+                        </a>
+                      ) : (
+                        "Not available"
+                      )}
                     </p>
-                   
                   </div>
                 </div>
               </div>
