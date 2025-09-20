@@ -25,8 +25,9 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith("image/")) cb(null, true);
-  else cb(new Error("Only image files are allowed"), false);
+  const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
+  if (allowedTypes.includes(file.mimetype)) cb(null, true);
+  else cb(new Error("Only JPG, PNG, or PDF files are allowed"), false);
 };
 
 const upload = multer({
@@ -65,7 +66,10 @@ async function runOCR(filePath) {
 // 🧬 NLP extraction
 async function extractMedicalEntities(text) {
   try {
-    const response = await axios.post("https://diagnostic-lab-tests-booking-app-1.onrender.com/extract", { text });
+    const response = await axios.post(
+      "https://diagnostic-lab-tests-booking-app-1.onrender.com/extract",
+      { text }
+    );
     return response.data;
   } catch (err) {
     console.error("NLP extraction error:", err.message);
@@ -90,7 +94,8 @@ function fallbackTestMatcher(text) {
 // 📤 Upload + extract route
 router.post("/upload-prescription", upload.single("file"), async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ error: "Prescription file is required" });
+    if (!req.file)
+      return res.status(400).json({ error: "Prescription file is required" });
 
     const filePath = req.file.path;
     const extractedText = await runOCR(filePath);
@@ -102,27 +107,37 @@ router.post("/upload-prescription", upload.single("file"), async (req, res) => {
       ...(entities?.medications || []),
     ];
 
-    const suggestedTests = autoTests.length ? autoTests : fallbackTestMatcher(extractedText);
+    const suggestedTests = autoTests.length
+      ? autoTests
+      : fallbackTestMatcher(extractedText);
 
     res.status(200).json({ extractedText, entities, suggestedTests });
   } catch (err) {
     console.error("❌ Extraction error:", err.message);
-    res.status(500).json({ error: "Failed to extract entities from prescription" });
+    res
+      .status(500)
+      .json({ error: "Failed to extract entities from prescription" });
   }
 });
 
 // 📝 Place order route
 router.post("/", upload.single("prescription"), async (req, res) => {
   try {
-    const { name, phone, tests, email, doctorName, prescriptionDate } = req.body;
+    const { name, phone, tests, email, doctorName, prescriptionDate } =
+      req.body;
 
     if (!name || !phone || !email || !req.file) {
-      return res.status(400).json({ error: "Missing required fields or file" });
+      return res
+        .status(400)
+        .json({ error: "Missing required fields or file" });
     }
 
     const parsedTests = Array.isArray(tests)
       ? tests
-      : tests?.split(",").map((t) => t.trim()).filter(Boolean);
+      : tests
+          ?.split(",")
+          .map((t) => t.trim())
+          .filter(Boolean);
 
     if (!parsedTests.length) {
       return res.status(400).json({ error: "No valid tests found in input" });
@@ -179,7 +194,9 @@ Warm regards,
 
     SendMail(email, "Diagnostic Test Booking Confirmation", mailText);
 
-    res.status(201).json({ message: "Order placed successfully", extractedTests: parsedTests });
+    res
+      .status(201)
+      .json({ message: "Order placed successfully", extractedTests: parsedTests });
   } catch (err) {
     console.error("❌ Order placement error:", err.message);
     res.status(500).json({ error: "Failed to place order" });
@@ -190,7 +207,10 @@ Warm regards,
 router.get("/by-email/:email", async (req, res) => {
   try {
     const email = req.params.email?.trim().toLowerCase();
-    if (!email) return res.status(400).json({ success: false, message: "Email is required" });
+    if (!email)
+      return res
+        .status(400)
+        .json({ success: false, message: "Email is required" });
 
     const orders = await db.collection("orders").find({ email }).toArray();
     res.status(200).json({ success: true, orders });

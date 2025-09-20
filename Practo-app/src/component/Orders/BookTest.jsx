@@ -31,7 +31,7 @@ const BookTest = () => {
     }
 
     axios
-      .post("https://diagnostic-lab-tests-booking-app-1.onrender.com/account", { email })
+      .post(`${process.env.REACT_APP_API_URL}/account`, { email })
       .then((res) => {
         if (res.data.success) {
           const user = res.data.user;
@@ -65,7 +65,7 @@ const BookTest = () => {
     try {
       setLoading(true);
       const res = await axios.post(
-        "https://diagnostic-lab-tests-booking-app-1.onrender.com/api/orders/upload-prescription",
+        `${process.env.REACT_APP_API_URL}/api/orders/upload-prescription`,
         tempPayload,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
@@ -143,7 +143,7 @@ const BookTest = () => {
     try {
       setLoading(true);
       const res = await axios.post(
-        "https://diagnostic-lab-tests-booking-app-1.onrender.com/api/orders",
+        `${process.env.REACT_APP_API_URL}/api/orders`,
         payload,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
@@ -227,17 +227,16 @@ const BookTest = () => {
                     className="d-none"
                     accept=".jpg,.jpeg,.png,.pdf"
                     onChange={handleFileChange}
-                                      />
+                  />
                 </div>
 
-                {/* Preview Section */}
                 {previewUrl && (
                   <div className="mt-3 text-center">
                     {formData.prescription?.type === "application/pdf" ? (
                       <div>
                         <i className="fas fa-file-pdf fa-3x text-danger"></i>
                         <p className="mt-2">{formData.prescription.name}</p>
-                      </div>
+                                              </div>
                     ) : (
                       <img
                         src={previewUrl}

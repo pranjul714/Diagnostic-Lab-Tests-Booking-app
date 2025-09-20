@@ -23,7 +23,7 @@ const MyOrder = () => {
       return;
     }
 
-    axios.get(`https://diagnostic-lab-tests-booking-app-1.onrender.com/api/orders/by-email/${user.email}`)
+   axios.get(`${process.env.REACT_APP_API_URL}/api/orders/by-email/${user.email}`)
       .then(res => {
         if (res.data.success) {
           setOrders(res.data.orders);

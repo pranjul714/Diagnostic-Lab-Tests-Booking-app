@@ -28,20 +28,22 @@ const LoginForm = () => {
               initialValues={{ email: '', password: '', rememberMe: false }}
               validationSchema={validationSchema}
               onSubmit={(values, { setSubmitting }) => {
-                axios.post("https://diagnostic-lab-tests-booking-app-1.onrender.com/login", {
+                axios.post(`${process.env.REACT_APP_API_URL}/login`, {
                   email: values.email,
                   password: values.password
-                })
+                }, { withCredentials: true })
                   .then(response => {
                     if (response.data.success) {
                       localStorage.setItem("user", JSON.stringify(response.data.user));
                       navigate("/");
                     } else {
+                      alert("Invalid credentials. Please try again.");
                       navigate("/invalid");
                     }
                   })
                   .catch(error => {
                     console.error("Login error:", error);
+                    alert("Login failed. Please check your credentials.");
                     navigate("/invalid");
                   })
                   .finally(() => setSubmitting(false));

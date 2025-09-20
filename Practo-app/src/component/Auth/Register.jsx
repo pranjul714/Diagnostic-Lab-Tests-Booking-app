@@ -25,7 +25,7 @@ const Register = () => {
   const navigate = useNavigate();
 
   return (
-    <div className='container mt-5 d-flex flex-wrap justify-content-center'>
+    <div className="container mt-5 d-flex flex-wrap justify-content-center">
       <div>
         <img src="/illustration.png" alt="Doctor illustration" style={{ maxWidth: '300px' }} />
       </div>
@@ -56,7 +56,7 @@ const Register = () => {
                 age: values.age,
               };
 
-              axios.post("https://diagnostic-lab-tests-booking-app-1.onrender.com/register", payload, {
+              axios.post(`${process.env.REACT_APP_API_URL}/register`, payload, {
                 withCredentials: true
               })
                 .then(() => {
