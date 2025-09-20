@@ -9,7 +9,7 @@ import Account from './component/Profile/Account';
 import Footer from './component/Home/Footer';
 import MyOrder from "./component/Orders/MyOrder";
 
-import ConsultDoctor from "./component/Doctor_Profile/doc";
+import ConsultDoctor from "./component/Doctor_Profile/ConsultDoctor.jsx";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
