@@ -3,7 +3,10 @@ import { Link } from 'react-router-dom'; // <-- Import Link
 import Header from "../Home/header";
 import Footer from '../Home/Footer';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import SearchBar from '../orders/searchBar';
+
+import SearchBar from './searchBar';
+
+// Practo-app\src\component\Orders\searchBar.jsx
 
 function Home() {
   return (

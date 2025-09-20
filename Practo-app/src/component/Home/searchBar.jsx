@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 
-export default function PractoSearchBar() {
+export default function SearchBar() {
   const [category, setCategory] = useState("Lab Tests");
   const [showCategoryOptions, setShowCategoryOptions] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -88,7 +88,7 @@ export default function PractoSearchBar() {
           />
           {showSuggestions && (
             <div
-              className="position-absolute bg-white border rounded-3 shadow-sm w-100 mt-1"
+              className="position-absolute bg-white border  text-dark rounded-3 shadow-sm w-100 mt-1"
               style={{ maxHeight: "200px", overflowY: "auto", zIndex: 1050 }}
               ref={suggestionsRef}
             >
@@ -97,7 +97,7 @@ export default function PractoSearchBar() {
                 {popularSearches.map((item) => (
                   <div
                     key={item}
-                    className="px-2 py-1 rounded"
+                    className="px-2 py-1 rounded text-dark"
                     style={{ cursor: "pointer" }}
                     onClick={() => {
                       setSearchText(item);
@@ -119,23 +119,6 @@ export default function PractoSearchBar() {
         </button>
       </div>
 
-      {/* Quick Filters */}
-      <div className="d-flex flex-wrap justify-content-center gap-2 mt-3">
-        {[
-          { label: "Near me" },
-          { label: "Home Collection" },
-          { label: "Available Today" },
-          { label: "Top Rated" },
-        ].map((filter) => (
-          <button
-            key={filter.label}
-            className="btn btn-outline-secondary btn-sm rounded-pill"
-            aria-label={filter.label}
-          >
-            {filter.label}
-          </button>
-        ))}
-      </div>
     </div>
   );
 }
