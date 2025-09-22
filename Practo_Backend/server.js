@@ -12,11 +12,9 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 const connectionString = process.env.MONGO_URI;
 
-// 📁 Ensure uploads folder exists
 const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
-// 🌐 CORS setup
 const allowedOrigins = [
   process.env.REACT_APP_API_URL,
   "http://localhost:3000"
@@ -34,12 +32,10 @@ app.use(cors({
   credentials: true
 }));
 
-// 🧩 Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(uploadDir));
 
-// 🔗 Connect to MongoDB
 MongoClient.connect(connectionString)
   .then(client => {
     const db = client.db("practo");
@@ -48,26 +44,12 @@ MongoClient.connect(connectionString)
     setDatabase(db);
     app.use("/api/orders", orderRouter);
 
-    // 🏠 Root route
     app.get("/", (req, res) => {
       res.send("<h2>🩺 Practo API is running</h2>");
     });
 
-    // 👥 Get all users
-    app.get("/users", async (req, res) => {
-      try {
-        const users = await db.collection("users").find({}).toArray();
-        res.status(200).json(users);
-      } catch (err) {
-        res.status(500).send("Error fetching users");
-      }
-    });
-
-    // 📝 Register user
     app.post("/register", async (req, res) => {
-      if (!req.body) {
-        return res.status(400).json({ success: false, message: "Missing request body" });
-      }
+      if (!req.body) return res.status(400).json({ success: false, message: "Missing request body" });
 
       const { userId, userName, password, email, age, phone } = req.body;
       if (!userId || !userName || !password || !email) {
@@ -103,7 +85,6 @@ MongoClient.connect(connectionString)
       }
     });
 
-    // 🔐 Login
     app.post("/login", async (req, res) => {
       const { email, password } = req.body;
       const normalizedEmail = email.trim().toLowerCase();
@@ -123,12 +104,12 @@ MongoClient.connect(connectionString)
       }
     });
 
-    // 📋 Fetch account + profile
     app.post("/account", async (req, res) => {
-      const { email } = req.body;
-      if (!email) return res.status(400).json({ success: false, message: "Email is required" });
+      if (!req.body || !req.body.email) {
+        return res.status(400).json({ success: false, message: "Missing email in request body" });
+      }
 
-      const normalizedEmail = email.trim().toLowerCase();
+      const normalizedEmail = req.body.email.trim().toLowerCase();
 
       try {
         const account = await db.collection("users").findOne({ email: normalizedEmail });
@@ -145,7 +126,6 @@ MongoClient.connect(connectionString)
       }
     });
 
-    // 🛠 Update profile
     app.post("/update-profile", async (req, res) => {
       const { email, profile } = req.body;
       if (!email || !profile) {
@@ -167,7 +147,6 @@ MongoClient.connect(connectionString)
       }
     });
 
-    // 🚀 Start server
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
     });
@@ -177,7 +156,6 @@ MongoClient.connect(connectionString)
     process.exit(1);
   });
 
-// 🧯 Error handling
 process.on("uncaughtException", err => {
   console.error("Uncaught Exception:", err);
 });
