@@ -19,7 +19,9 @@ if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://diagnostic-lab-tests-booking-app.vercel.app"
+  "http://localhost:8080",
+  "https://diagnostic-lab-tests-booking-app.vercel.app",
+  "https://diagnostic-lab-tests-booking-app-1.vercel.app"
 ];
 
 app.use(cors({
