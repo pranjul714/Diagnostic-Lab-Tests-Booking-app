@@ -9,7 +9,7 @@ require("dotenv").config();
 const { router: orderRouter, setDatabase } = require("./routes/orders");
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3000;
 const connectionString = process.env.MONGO_URI;
 
 // ✅ Create uploads folder if missing
@@ -27,6 +27,7 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.log('❌ Blocked by CORS:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -47,7 +48,8 @@ MongoClient.connect(connectionString)
     setDatabase(db);
     app.use("/api/orders", orderRouter);
 
-    // ✅ Routes
+    
+
     app.get("/", (req, res) => {
       res.send("<h2>🩺 Practo API is running</h2>");
     });
@@ -60,6 +62,9 @@ MongoClient.connect(connectionString)
         res.status(500).send("Error fetching users");
       }
     });
+
+
+    
 
     app.post("/register", async (req, res) => {
       const { userId, userName, password, email, age, phone } = req.body;
@@ -91,10 +96,13 @@ MongoClient.connect(connectionString)
 
         res.status(201).json({ success: true, message: "User registered successfully" });
       } catch (err) {
-        console.error("❌ Registration error:", err.message);
+        console.error(" Registration error:", err.message);
         res.status(500).json({ success: false, message: "Server error during registration" });
       }
     });
+
+
+
 
     app.post("/login", async (req, res) => {
       const { email, password } = req.body;
@@ -110,10 +118,13 @@ MongoClient.connect(connectionString)
         const { password: _, ...safeUser } = user;
         res.json({ success: true, user: safeUser });
       } catch (err) {
-        console.error("❌ Login error:", err.message);
+        console.error(" Login error:", err.message);
         res.status(500).json({ success: false, message: "Server error during login" });
       }
     });
+
+
+
 
     app.post("/account", async (req, res) => {
       const { email } = req.body;
@@ -159,7 +170,7 @@ MongoClient.connect(connectionString)
 
     // ✅ Start server
     app.listen(PORT, () => {
-      console.log(`🚀 Server running at http://localhost:${PORT}`);
+      console.log(`🚀 Server running on port ${PORT}`);
     });
   })
   .catch(err => {

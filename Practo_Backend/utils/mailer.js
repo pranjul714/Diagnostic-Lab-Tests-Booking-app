@@ -1,4 +1,5 @@
 const nodemailer = require("nodemailer");
+require("dotenv").config();
 
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -10,10 +11,16 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+/**
+ * Sends an email using Gmail SMTP
+ * @param {string} to - Recipient email
+ * @param {string} subject - Email subject
+ * @param {string} text - Plain text body
+ */
 async function SendMail(to, subject, text) {
   try {
     const info = await transporter.sendMail({
-    
+      from: `"Diagnostic Booking Team" <${process.env.EMAIL_USER}>`,
       to,
       subject,
       text,

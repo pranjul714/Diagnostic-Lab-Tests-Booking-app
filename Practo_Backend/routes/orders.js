@@ -5,6 +5,7 @@ const fs = require("fs");
 const Tesseract = require("tesseract.js");
 const axios = require("axios");
 const SendMail = require("../utils/mailer");
+require("dotenv").config();
 
 const router = express.Router();
 let db;
@@ -65,7 +66,8 @@ async function runOCR(filePath) {
 // 🧬 NLP extraction
 async function extractMedicalEntities(text) {
   try {
-    const response = await axios.post("https://diagnostic-lab-tests-booking-app-1.onrender.com/extract", { text });
+    const NLP_SERVICE_URL = process.env.NLP_SERVICE_URL;
+    const response = await axios.post(NLP_SERVICE_URL, { text });
     return response.data;
   } catch (err) {
     console.error("NLP extraction error:", err.message);
@@ -96,6 +98,8 @@ router.post("/upload-prescription", upload.single("file"), async (req, res) => {
     const extractedText = await runOCR(filePath);
     const entities = await extractMedicalEntities(extractedText);
 
+    console.log("🔍 Extracted Entities:", entities);
+
     const autoTests = [
       ...(entities?.diagnoses || []),
       ...(entities?.symptoms || []),
@@ -124,9 +128,12 @@ router.post("/", upload.single("prescription"), async (req, res) => {
       ? tests
       : tests?.split(",").map((t) => t.trim()).filter(Boolean);
 
-    if (!parsedTests.length) {
-      return res.status(400).json({ error: "No valid tests found in input" });
+    if (!parsedTests || !parsedTests.length) {
+      return res.status(422).json({ error: "No valid tests found in input" });
     }
+
+    const baseUrl = process.env.REACT_APP_API_URL || `${req.protocol}://${req.get("host")}`;
+    const prescriptionUrl = `${baseUrl}/uploads/${req.file.filename}`;
 
     const order = {
       name,
@@ -136,7 +143,7 @@ router.post("/", upload.single("prescription"), async (req, res) => {
       prescriptionDate,
       tests: parsedTests,
       prescriptionPath: req.file.path,
-      prescriptionUrl: `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`,
+      prescriptionUrl,
       status: "Pending",
       createdAt: new Date(),
     };
