@@ -4,6 +4,7 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
+// import { toast } from 'react-toastify'; // Optional for toast feedback
 
 const validationSchema = Yup.object({
   email: Yup.string().email('Invalid email').required('Required'),
@@ -23,6 +24,7 @@ const validationSchema = Yup.object({
 
 const Register = () => {
   const navigate = useNavigate();
+  const API_URL = process.env.REACT_APP_API_URL;
 
   return (
     <div className='container mt-5 d-flex flex-wrap justify-content-center'>
@@ -56,17 +58,19 @@ const Register = () => {
                 age: values.age,
               };
 
-              axios.post("https://diagnostic-lab-tests-booking-app-1.onrender.com/register", payload, {
+              axios.post(`${API_URL}/register`, payload, {
                 withCredentials: true
               })
                 .then(() => {
                   alert("✅ Registration successful!");
+                  // toast.success("Registration successful!");
                   navigate("/login");
                 })
                 .catch((error) => {
                   const message = error.response?.data?.message || "Registration failed. Please try again.";
                   console.error("Registration error:", error);
                   alert(`❌ ${message}`);
+                  // toast.error(message);
                 })
                 .finally(() => setSubmitting(false));
             }}
@@ -84,7 +88,7 @@ const Register = () => {
                 ].map(({ label, name, type }) => (
                   <div className="mb-3" key={name}>
                     <label htmlFor={name} className="form-label">{label}</label>
-                    <Field type={type} name={name} className="form-control" autoComplete="off" />
+                    <Field type={type} name={name} className="form-control" />
                     <ErrorMessage name={name} component="div" className="text-danger" />
                   </div>
                 ))}

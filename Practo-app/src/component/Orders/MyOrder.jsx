@@ -6,6 +6,8 @@ import Header from '../Home/header';
 
 const MyOrder = () => {
   const navigate = useNavigate();
+  const API_URL = process.env.REACT_APP_API_URL;
+
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
@@ -23,7 +25,7 @@ const MyOrder = () => {
       return;
     }
 
-    axios.get(`https://diagnostic-lab-tests-booking-app-1.onrender.com/api/orders/by-email/${user.email}`)
+    axios.get(`${API_URL}/api/orders/by-email/${user.email}`)
       .then(res => {
         if (res.data.success) {
           setOrders(res.data.orders);
@@ -36,7 +38,7 @@ const MyOrder = () => {
         setErrorMsg("Unable to fetch orders. Please try again later.");
       })
       .finally(() => setLoading(false));
-  }, [navigate]);
+  }, [navigate, API_URL]);
 
   return (
     <div>

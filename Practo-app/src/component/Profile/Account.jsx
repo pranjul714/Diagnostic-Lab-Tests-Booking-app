@@ -24,6 +24,7 @@ const validationSchema = Yup.object({
 
 const Register = () => {
   const navigate = useNavigate();
+  const API_URL = process.env.REACT_APP_API_URL;
 
   return (
     <div className='container mt-5 d-flex flex-wrap justify-content-center'>
@@ -57,7 +58,7 @@ const Register = () => {
                 age: values.age,
               };
 
-              axios.post("https://diagnostic-lab-tests-booking-app-1.onrender.com/register", payload, {
+              axios.post(`${API_URL}/register`, payload, {
                 withCredentials: true
               })
                 .then(() => {

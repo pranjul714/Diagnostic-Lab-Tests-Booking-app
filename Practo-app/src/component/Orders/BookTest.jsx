@@ -7,6 +7,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 const BookTest = () => {
   const fileInputRef = useRef();
   const navigate = useNavigate();
+  const API_URL = process.env.REACT_APP_API_URL;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -31,7 +32,7 @@ const BookTest = () => {
     }
 
     axios
-      .post("https://diagnostic-lab-tests-booking-app-1.onrender.com/account", { email })
+      .post(`${API_URL}/account`, { email })
       .then((res) => {
         if (res.data.success) {
           const user = res.data.user;
@@ -43,7 +44,7 @@ const BookTest = () => {
         }
       })
       .catch(() => navigate("/login"));
-  }, [navigate]);
+  }, [navigate, API_URL]);
 
   const handleFileClick = () => fileInputRef.current.click();
 
@@ -65,7 +66,7 @@ const BookTest = () => {
     try {
       setLoading(true);
       const res = await axios.post(
-        "https://diagnostic-lab-tests-booking-app-1.onrender.com/api/orders/upload-prescription",
+        `${API_URL}/api/orders/upload-prescription`,
         tempPayload,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
@@ -143,7 +144,7 @@ const BookTest = () => {
     try {
       setLoading(true);
       const res = await axios.post(
-        "https://diagnostic-lab-tests-booking-app-1.onrender.com/api/orders",
+        `${API_URL}/api/orders`,
         payload,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
@@ -227,27 +228,26 @@ const BookTest = () => {
                     className="d-none"
                     accept=".jpg,.jpeg,.png,.pdf"
                     onChange={handleFileChange}
-                                      />
+                  />
                 </div>
 
-                {/* Preview Section */}
-                {previewUrl && (
-                  <div className="mt-3 text-center">
-                    {formData.prescription?.type === "application/pdf" ? (
-                      <div>
-                        <i className="fas fa-file-pdf fa-3x text-danger"></i>
-                        <p className="mt-2">{formData.prescription.name}</p>
-                      </div>
-                    ) : (
-                      <img
-                        src={previewUrl}
-                        alt="Prescription Preview"
-                        className="img-fluid rounded shadow-sm"
-                        style={{ maxWidth: "400px" }}
-                      />
-                    )}
-                  </div>
-                )}
+               {previewUrl && (
+  <div className="mt-3 text-center">
+    {formData.prescription?.type === "application/pdf" ? (
+      <div>
+        <i className="fas fa-file-pdf fa-3x text-danger"></i>
+        <p className="mt-2">{formData.prescription.name}</p>
+      </div>
+    ) : (
+      <img
+        src={previewUrl}
+        alt="Prescription Preview"
+        className="img-fluid rounded shadow-sm"
+        style={{ maxWidth: "400px" }}
+      />
+    )}
+  </div>
+)}
               </div>
 
               <div className="col-md-12 text-center mt-4">
