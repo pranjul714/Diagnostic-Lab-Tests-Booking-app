@@ -58,6 +58,15 @@ const Register = () => {
                 age: values.age,
               };
 
+              axios.post(`${API_URL}/register`, {
+  userId: "001",
+  userName: "Pranjul Singh",
+  email: "pranjulsingh38@gmail.com",
+  phone: "+919876543210",
+  password: "sQwerty!123",
+  age: 22
+});
+
               axios.post(`${API_URL}/register`, payload, {
                 withCredentials: true
               })
