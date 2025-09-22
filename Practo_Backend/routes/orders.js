@@ -66,8 +66,7 @@ async function runOCR(filePath) {
 // 🧬 NLP extraction
 async function extractMedicalEntities(text) {
   try {
-    const NLP_SERVICE_URL = process.env.NLP_SERVICE_URL;
-    const response = await axios.post(NLP_SERVICE_URL, { text });
+    const response = await axios.post(process.env.NLP_SERVICE_URL, { text });
     return response.data;
   } catch (err) {
     console.error("NLP extraction error:", err.message);

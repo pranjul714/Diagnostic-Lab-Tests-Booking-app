@@ -9,7 +9,7 @@ require("dotenv").config();
 const { router: orderRouter, setDatabase } = require("./routes/orders");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 const connectionString = process.env.MONGO_URI;
 
 // 📁 Ensure uploads folder exists
@@ -18,7 +18,7 @@ if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
 // 🌐 CORS setup
 const allowedOrigins = [
-  "https://diagnostic-lab-tests-booking-app-7d.vercel.app",
+  process.env.REACT_APP_API_URL,
   "http://localhost:3000"
 ];
 
@@ -42,7 +42,7 @@ app.use("/uploads", express.static(uploadDir));
 // 🔗 Connect to MongoDB
 MongoClient.connect(connectionString)
   .then(client => {
-    const db = client.db("Practo");
+    const db = client.db("practo");
     console.log("✅ Connected to MongoDB");
 
     setDatabase(db);
