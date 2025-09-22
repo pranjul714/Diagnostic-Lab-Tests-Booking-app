@@ -15,9 +15,11 @@ const connectionString = process.env.MONGO_URI;
 const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
+
+
 const allowedOrigins = [
-  process.env.REACT_APP_API_URL,
-  "http://localhost:3000"
+  "http://localhost:3000",
+  "https://diagnostic-lab-tests-booking-app.vercel.app"
 ];
 
 app.use(cors({
@@ -25,7 +27,6 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.log("❌ Blocked by CORS:", origin);
       callback(new Error("Not allowed by CORS"));
     }
   },
